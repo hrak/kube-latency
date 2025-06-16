@@ -135,7 +135,7 @@ func (a *App) testLoop() {
 			LabelSelector: serviceLabels.AsSelector().String(),
 		})
 		if err != nil {
-			log.Warn("failed to list pods with selector '%s': %s", serviceLabels.AsSelector().String(), err)
+			log.Warnf("failed to list pods with selector '%s': %s", serviceLabels.AsSelector().String(), err)
 		}
 
 		destinations := []*Labels{}
