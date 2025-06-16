@@ -1,11 +1,11 @@
-ACCOUNT=simonswine
+ACCOUNT=hrak
 APP_NAME=kube-latency
 
 PACKAGE_NAME=github.com/${ACCOUNT}/${APP_NAME}
-GO_VERSION=1.8
+GO_VERSION=1.24
 
 DOCKER_IMAGE=${ACCOUNT}/${APP_NAME}
-
+DOCKER_TAG=latest
 BUILD_DIR=_build
 
 CONTAINER_DIR=/go/src/${PACKAGE_NAME}
@@ -23,35 +23,24 @@ version:
 	$(eval GIT_COMMIT := $(shell git rev-parse HEAD))
 	$(eval APP_VERSION := $(shell cat VERSION))
 
-build: depend version
+fmt: ## Run go fmt against code.
+	go fmt ./...
+
+vet: ## Run go vet against code.
+	go vet ./...
+
+build: depend version fmt vet
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build \
 		-a -tags netgo \
 		-o ${BUILD_DIR}/${APP_NAME}-linux-amd64 \
 		-ldflags "-X main.AppGitState=${GIT_STATE} -X main.AppGitCommit=${GIT_COMMIT} -X main.AppVersion=${APP_VERSION}"
 
-docker: docker_all
-
-docker_%:
-	# create a container
-	$(eval CONTAINER_ID := $(shell docker create \
-		-i \
-		-w $(CONTAINER_DIR) \
-		golang:${GO_VERSION} \
-		/bin/bash -c "tar xf - && make $*" \
-	))
+docker-build: version
+	docker build --build-arg GIT_COMMIT=$(GIT_COMMIT) --build-arg GIT_STATE=$(GIT_STATE) --build-arg APP_VERSION=$(APP_VERSION) -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
 	
-	# run build inside container
-	tar cf - . | docker start -a -i $(CONTAINER_ID)
+docker-push:
+	docker push $(DOCKER_IMAGE):$(DOCKER_TAG)
 
-	# copy artifacts over
-	rm -rf $(BUILD_DIR)/
-	docker cp $(CONTAINER_ID):$(CONTAINER_DIR)/$(BUILD_DIR)/ .
-
-	# remove container
-	docker rm $(CONTAINER_ID)
-
-image: docker_all version
-	docker build --build-arg VCS_REF=$(GIT_COMMIT) -t $(ACCOUNT)/$(APP_NAME):latest .
-	
-push: image
-	docker push $(ACCOUNT)/$(APP_NAME):latest
+vendor-update:
+	go mod tidy -compat=1.24
+	go mod vendor
