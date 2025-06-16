@@ -30,7 +30,3 @@ docker-build: version
 	
 docker-push:
 	docker push $(DOCKER_IMAGE):$(DOCKER_TAG)
-
-vendor-update:
-	go mod tidy -compat=1.24
-	go mod vendor
