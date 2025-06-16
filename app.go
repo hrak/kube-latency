@@ -121,7 +121,7 @@ func (a *App) getZoneForNode(nodeName string) string {
 		return ""
 	}
 
-	zone, _ := node.Labels[corev1.LabelZoneFailureDomain]
+	zone := node.Labels[corev1.LabelZoneFailureDomain]
 	a.zonePerNode[nodeName] = zone
 
 	return zone
@@ -135,7 +135,7 @@ func (a *App) testLoop() {
 			LabelSelector: serviceLabels.AsSelector().String(),
 		})
 		if err != nil {
-			log.Warn("failed to list pods with selector '%s': %s", serviceLabels.AsSelector().String(), err)
+			log.Warnf("failed to list pods with selector '%s': %s", serviceLabels.AsSelector().String(), err)
 		}
 
 		destinations := []*Labels{}
