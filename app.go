@@ -121,7 +121,7 @@ func (a *App) getZoneForNode(nodeName string) string {
 		return ""
 	}
 
-	zone, _ := node.Labels[corev1.LabelZoneFailureDomain]
+	zone := node.Labels[corev1.LabelZoneFailureDomain]
 	a.zonePerNode[nodeName] = zone
 
 	return zone
